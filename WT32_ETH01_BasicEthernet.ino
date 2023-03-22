@@ -5,11 +5,16 @@
 
 #include <ETH.h>
 
-static bool eth_connected        = false;
-unsigned long lastTestTime       = 0;
-const unsigned long testInterval = 10000;
-const unsigned int serverPort    = 1880;
-const char *serverAddress        = "theocho.local";
+unsigned long lastTestTime       = 0;                    // The time of the last test.
+const unsigned long testInterval = 10000;                // The time in milliseconds between tests.
+const unsigned int serverPort    = 1880;                 // The network port of the server to test against.
+const char *serverAddress        = "theocho.local";      // The network address of the server to test against.
+const char *HOSTNAME             = "WT32-ETH01";         // The device hostname.
+char macAddress[18]              = "AA:BB:CC:00:11:22";  // A character array to hold the MAC address and a null terminator.
+char ipAddress[16]               = "127.0.0.1";          // A character array to hold the IP address and a null terminator.
+char duplex[12]                  = "HALF_DUPLEX";        // A character array to hold the link duplex state and a null terminator.
+bool eth_connected               = false;                // A flag to indicate the connection state.
+uint8_t linkSpeed                = 42;                   // This default value helps identify when the real value has not been assigned yet.
 
 
 /**
@@ -19,28 +24,25 @@ const char *serverAddress        = "theocho.local";
  */
 void NetworkEvent( WiFiEvent_t event )
 {
+	networkCallbackCount++;
 	switch( event )
 	{
 		case ARDUINO_EVENT_ETH_START:
 			Serial.println( "ETH Started" );
-			//set eth hostname here
-			ETH.setHostname( "esp32-ethernet" );
+			ETH.setHostname( HOSTNAME );
 			break;
 		case ARDUINO_EVENT_ETH_CONNECTED:
 			Serial.println( "ETH Connected" );
 			break;
 		case ARDUINO_EVENT_ETH_GOT_IP:
-			Serial.print( "ETH MAC: " );
-			Serial.print( ETH.macAddress() );
-			Serial.print( ", IPv4: " );
-			Serial.print( ETH.localIP() );
+			snprintf( macAddress, 18, "%s", ETH.macAddress().c_str() );
+			snprintf( ipAddress, 16, "%d.%d.%d.%d", ETH.localIP()[0], ETH.localIP()[1], ETH.localIP()[2], ETH.localIP()[3] );
 			if( ETH.fullDuplex() )
-			{
-				Serial.print( ", FULL_DUPLEX" );
-			}
-			Serial.print( ", " );
-			Serial.print( ETH.linkSpeed() );
-			Serial.println( "Mbps" );
+				snprintf( duplex, 12, "%s", "FULL_DUPLEX" );
+			else
+				snprintf( duplex, 12, "%s", "HALF_DUPLEX" );
+			linkSpeed = ETH.linkSpeed();
+			Serial.printf( "ETH MAC: %s, IPv4: %s, %s, %u Mbps", macAddress, ipAddress, duplex, linkSpeed );
 			eth_connected = true;
 			break;
 		case ARDUINO_EVENT_ETH_DISCONNECTED:
@@ -54,7 +56,7 @@ void NetworkEvent( WiFiEvent_t event )
 		default:
 			break;
 	}
-} // End of the NetworkEvent() callback function.
+}  // End of the NetworkEvent() callback function.
 
 
 /**
@@ -64,8 +66,8 @@ void NetworkEvent( WiFiEvent_t event )
  */
 void testClient( const char *host, const unsigned int port )
 {
-	Serial.print( "\nConnecting to " );
-	Serial.println( host );
+	Serial.printf( "\nConnecting to %s\n", host );
+	Serial.printf( "ESP32 IP address: %s\n", ipAddress );
 
 	WiFiClient client;
 	if( !client.connect( host, port ) )
@@ -81,17 +83,24 @@ void testClient( const char *host, const unsigned int port )
 		Serial.write( client.read() );
 	}
 
-	Serial.println( "closing connection\n" );
+	Serial.println( "Closing connection\n" );
 	client.stop();
-} // End of the testClient() function.
+}  // End of the testClient() function.
 
 
 void setup()
 {
+	delay( 1000 );
 	Serial.begin( 115200 );
+	if( !Serial )
+		delay( 1000 );
+	Serial.println( "\n" );
+	Serial.println( "Function setup() is beginning." );
 	WiFi.onEvent( NetworkEvent );
 	ETH.begin();
-} // End of the setup() function.
+	// This delay give the Ethernet hardware time to initialize.
+	delay( 300 );
+}  // End of the setup() function.
 
 
 void loop()
@@ -102,4 +111,4 @@ void loop()
 		testClient( serverAddress, serverPort );
 		lastTestTime = millis();
 	}
-} // End of the loop() function.
+}  // End of the loop() function.
