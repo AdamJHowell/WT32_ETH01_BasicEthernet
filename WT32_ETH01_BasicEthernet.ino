@@ -1,14 +1,15 @@
 /**
- * This sketch demonstrates basic Ethernet usage.
+ * A very simple demonstration of the ETH library for the WT32-ETH01 devkit.
+ * This sketch will attempt to connect to a HTTP server, and if successful, will print the response from that server to the serial port.
  */
 
 #include <ETH.h>
 
-static bool eth_connected     = false;
-const char *serverAddress     = "theocho.local";
-const unsigned int serverPort = 1880;
-unsigned long lastTestTime    = 0;
-unsigned long testInterval    = 10000;
+static bool eth_connected        = false;
+unsigned long lastTestTime       = 0;
+const unsigned long testInterval = 10000;
+const unsigned int serverPort    = 1880;
+const char *serverAddress        = "theocho.local";
 
 
 /**
@@ -83,6 +84,7 @@ void testClient( const char *host, const unsigned int port )
 	Serial.println( "closing connection\n" );
 	client.stop();
 }
+
 
 void setup()
 {
