@@ -54,7 +54,7 @@ void NetworkEvent( WiFiEvent_t event )
 		default:
 			break;
 	}
-}
+} // End of the NetworkEvent() callback function.
 
 
 /**
@@ -83,7 +83,7 @@ void testClient( const char *host, const unsigned int port )
 
 	Serial.println( "closing connection\n" );
 	client.stop();
-}
+} // End of the testClient() function.
 
 
 void setup()
@@ -91,7 +91,7 @@ void setup()
 	Serial.begin( 115200 );
 	WiFi.onEvent( NetworkEvent );
 	ETH.begin();
-}
+} // End of the setup() function.
 
 
 void loop()
@@ -102,4 +102,4 @@ void loop()
 		testClient( serverAddress, serverPort );
 		lastTestTime = millis();
 	}
-}
+} // End of the loop() function.
